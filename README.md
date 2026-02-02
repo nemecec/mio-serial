@@ -11,7 +11,7 @@
 
 # mio-serial: A serial port IO library MIO.
 
-mio-serial provides a serial port implementation using [mio](https://github.com/carllerche/mio).
+mio-serial provides a serial port implementation using [mio](https://github.com/tokio-rs/mio).
 
 ## Usage
 
@@ -64,5 +64,5 @@ cargo test -j1 -- --test-threads=1
 ## License
 This software is licensed under [MIT](https://opensource.org/licenses/MIT).
 
-This software builds upon the [MPL-2.0](https://opensource.org/licenses/MPL-2.0) licensed [serialport-rs](https://gitlab.com/susurrus/serialport-rs) and 
-constitutes a "Larger Work" by that license.  The source for [serialport-rs](https://gitlab.com/susurrus/serialport-rs) can be found at https://gitlab.com/susurrus/serialport-rs.
+This software builds upon the [MPL-2.0](https://opensource.org/licenses/MPL-2.0) licensed [serialport-rs](https://github.com/serialport/serialport-rs) and
+constitutes a "Larger Work" by that license.
