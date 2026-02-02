@@ -679,6 +679,21 @@ mod io {
             Self { inner, pipe }
         }
     }
+
+    impl Drop for SerialStream {
+        fn drop(&mut self) {
+            // Handle cleanup strategy:
+            // - `pipe` (NamedPipe) and `inner` (COMPort) both wrap the same raw handle
+            // - `inner` is wrapped in ManuallyDrop to prevent double-close
+            // - NamedPipe's Drop closes the handle (happens automatically after this runs)
+            // - COMPort's Drop is never called, but that's safe because:
+            //   - COMPort was created via from_raw_handle, so port_name is None (no leak)
+            //   - The handle closure is handled by NamedPipe
+            //
+            // This explicit Drop impl exists for documentation purposes.
+            // The actual cleanup happens when `self.pipe` is dropped after this method returns.
+        }
+    }
 }
 
 #[cfg(unix)]
