@@ -15,7 +15,7 @@ mio-serial provides a serial port implementation using [mio](https://github.com/
 
 ## Usage
 
-Add `mio-serial` to you `Cargo.toml`:
+Add `mio-serial` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -45,7 +45,7 @@ A few examples can be found [here](https://github.com/berkowski/mio-serial/tree/
 
 ## Tests
 Useful tests for serial ports require... serial ports, and serial ports are not often provided by online CI providers.
-As so, automated build testing are really only check whether the code compiles, not whether it works.
+As such, automated build tests really only check whether the code compiles, not whether it works.
 
 Integration tests are in the `tests/` directory and typically require two serial ports to run.
 The names of the serial ports can be configured at run time by setting the `TEST_PORT_NAMES` environment variable

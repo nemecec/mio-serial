@@ -48,7 +48,7 @@ impl Readiness {
 
     fn matches(&self, event: &Event) -> bool {
         // If we expect a readiness then also match on the event.
-        // In maths terms that is p -> q, which is the same  as !p || q.
+        // In maths terms that is p -> q, which is the same as !p || q.
         (!self.is(READABLE) || event.is_readable())
             && (!self.is(WRITABLE) || event.is_writable())
             && (!self.is(AIO) || event.is_aio())
@@ -124,7 +124,7 @@ impl ExpectEvent {
 }
 
 pub fn expect_events(poll: &mut Poll, events: &mut Events, mut expected: Vec<ExpectEvent>) {
-    // In a lot of calls we expect more then one event, but it could be that
+    // In a lot of calls we expect more than one event, but it could be that
     // poll returns the first event only in a single call. To be a bit more
     // lenient we'll poll a couple of times.
     for _ in 0..3 {

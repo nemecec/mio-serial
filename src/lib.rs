@@ -1,6 +1,6 @@
 //! # mio-serial - Serial port I/O for mio
 //!
-//! This crate provides a serial port implementation compatable with mio.
+//! This crate provides a serial port implementation compatible with mio.
 //!
 //! **Windows support is present but largely untested by the author**
 //!
@@ -473,7 +473,7 @@ impl crate::SerialPort for SerialStream {
     /// should look at [mio-serial](https://crates.io/crates/mio-serial) or
     /// [tokio-serial](https://crates.io/crates/tokio-serial).
     ///
-    /// Also, you must be very carefull when changing the settings of a cloned `SerialPort` : since
+    /// Also, you must be very careful when changing the settings of a cloned `SerialPort` : since
     /// the settings are cached on a per object basis, trying to modify them from two different
     /// objects can cause some nasty behavior.
     ///
@@ -584,7 +584,7 @@ impl TryFrom<NativeBlockingSerialPort> for SerialStream {
         //
         // We need both the NamedPipe for Read/Write and COMPort for serialport related
         // actions.  Both are created using FromRawHandle which takes ownership of the
-        // handle which may case a double-free as both objects attempt to close the handle.
+        // handle which may cause a double-free as both objects attempt to close the handle.
         //
         // Looking through the source for both NamedPipe and COMPort, NamedPipe does some
         // cleanup in Drop while COMPort just closes the handle.
