@@ -44,7 +44,8 @@ use std::time::Duration;
 #[cfg(unix)]
 mod os_prelude {
     pub use mio::unix::SourceFd;
-    pub use nix::{self, libc};
+    pub use nix;
+    pub use nix::fcntl::{fcntl, FcntlArg, OFlag};
     pub use serialport::TTYPort as NativeBlockingSerialPort;
     pub use std::os::unix::prelude::*;
 }
@@ -146,7 +147,6 @@ impl SerialStream {
     pub fn exclusive(&self) -> bool {
         self.inner.exclusive()
     }
-
 }
 
 impl crate::SerialPort for SerialStream {
@@ -437,20 +437,21 @@ impl TryFrom<NativeBlockingSerialPort> for SerialStream {
     type Error = crate::Error;
     #[cfg(unix)]
     fn try_from(port: NativeBlockingSerialPort) -> std::result::Result<Self, Self::Error> {
+        use std::os::fd::BorrowedFd;
+
         // Set the O_NONBLOCK flag.
         log::debug!(
             "setting O_NONBLOCK for {}",
             port.name().unwrap_or_else(|| String::from("<UNKNOWN>"))
         );
-        let flags = unsafe { libc::fcntl(port.as_raw_fd(), libc::F_GETFL) };
-        if flags < 0 {
-            return Err(StdIoError::last_os_error().into());
-        }
 
-        match unsafe { libc::fcntl(port.as_raw_fd(), libc::F_SETFL, flags | libc::O_NONBLOCK) } {
-            0 => Ok(SerialStream { inner: port }),
-            _ => Err(StdIoError::last_os_error().into()),
-        }
+        // SAFETY: port is a valid open file descriptor
+        let fd = unsafe { BorrowedFd::borrow_raw(port.as_raw_fd()) };
+        let flags = fcntl(fd, FcntlArg::F_GETFL).map_err(StdIoError::from)?;
+        let flags = OFlag::from_bits_retain(flags);
+        fcntl(fd, FcntlArg::F_SETFL(flags | OFlag::O_NONBLOCK)).map_err(StdIoError::from)?;
+
+        Ok(SerialStream { inner: port })
     }
     #[cfg(windows)]
     fn try_from(port: NativeBlockingSerialPort) -> std::result::Result<Self, Self::Error> {
@@ -698,8 +699,8 @@ mod io {
 
 #[cfg(unix)]
 mod sys {
-    use super::{NativeBlockingSerialPort, SerialStream};
-    use nix::libc;
+    use super::{fcntl, FcntlArg, NativeBlockingSerialPort, OFlag, SerialStream};
+    use std::os::fd::BorrowedFd;
     use std::os::unix::prelude::*;
 
     impl AsRawFd for SerialStream {
@@ -726,10 +727,12 @@ mod sys {
             let port = NativeBlockingSerialPort::from_raw_fd(fd);
 
             // Set O_NONBLOCK for consistency with TryFrom<NativeBlockingSerialPort>
-            let flags = libc::fcntl(fd, libc::F_GETFL);
-            assert!(flags >= 0, "failed to get file descriptor flags");
-            let result = libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK);
-            assert!(result == 0, "failed to set O_NONBLOCK");
+            let borrowed_fd = BorrowedFd::borrow_raw(fd);
+            let flags =
+                fcntl(borrowed_fd, FcntlArg::F_GETFL).expect("failed to get file descriptor flags");
+            let flags = OFlag::from_bits_retain(flags);
+            fcntl(borrowed_fd, FcntlArg::F_SETFL(flags | OFlag::O_NONBLOCK))
+                .expect("failed to set O_NONBLOCK");
 
             Self { inner: port }
         }
