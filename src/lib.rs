@@ -147,74 +147,6 @@ impl SerialStream {
         self.inner.exclusive()
     }
 
-    /// Attempts to clone the `SerialPort`. This allow you to write and read simultaneously from the
-    /// same serial connection.
-    ///
-    /// Also, you must be very careful when changing the settings of a cloned `SerialPort` : since
-    /// the settings are cached on a per object basis, trying to modify them from two different
-    /// objects can cause some nasty behavior.
-    ///
-    /// This is the same as `SerialPort::try_clone()` but returns the concrete type instead.
-    ///
-    /// # Errors
-    ///
-    /// This function returns an error if the serial port couldn't be cloned.
-    ///
-    /// # DON'T USE THIS AS-IS
-    ///
-    /// This logic has never really completely worked.  Cloned file descriptors in asynchronous
-    /// code is a semantic minefield.  Are you cloning the file descriptor?  Are you cloning the
-    /// event flags on the file descriptor?  Both?  It's a bit of a mess even within one OS,
-    /// let alone across multiple OS's
-    ///
-    /// Maybe it can be done with more work, but until a clear use-case is required (or mio/tokio
-    /// gets an equivalent of the unix `AsyncFd` for async file handles, see
-    /// https://github.com/tokio-rs/tokio/issues/3781 and
-    /// https://github.com/tokio-rs/tokio/pull/3760#issuecomment-839854617) I would rather not
-    /// have any enabled code over a kind-of-works-maybe impl.  So I'll leave this code here
-    /// for now but hard-code it disabled.
-    #[cfg(any())]
-    pub fn try_clone_native(&self) -> Result<SerialStream> {
-        // This works so long as the underlying serialport-rs method doesn't do anything but
-        // duplicate the low-level file descriptor.  This is the case as of serialport-rs:4.0.1
-        let cloned_native = self.inner.try_clone_native()?;
-        #[cfg(unix)]
-        {
-            Ok(Self {
-                inner: cloned_native,
-            })
-        }
-        #[cfg(windows)]
-        {
-            // Same procedure as used in serialport-rs for duplicating raw handles
-            // https://docs.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-duplicatehandle
-            // states that it can be used as well for pipes created with CreateNamedPipe as well
-            let pipe_handle = self.pipe.as_raw_handle();
-
-            let process_handle: HANDLE = unsafe { GetCurrentProcess() };
-            let mut cloned_pipe_handle: HANDLE = INVALID_HANDLE_VALUE;
-            unsafe {
-                DuplicateHandle(
-                    process_handle,
-                    pipe_handle,
-                    process_handle,
-                    &mut cloned_pipe_handle,
-                    0,
-                    TRUE,
-                    DUPLICATE_SAME_ACCESS,
-                );
-                if cloned_pipe_handle != INVALID_HANDLE_VALUE {
-                    let cloned_pipe = unsafe { NamedPipe::from_raw_handle(cloned_pipe_handle) };
-                    Ok(Self {
-                        inner: mem::ManuallyDrop::new(cloned_native),
-                        pipe: cloned_pipe,
-                    })
-                } else {
-                    Err(StdIoError::last_os_error().into())
-                }
-            }
-        }
-    }
 }
 
 impl crate::SerialPort for SerialStream {
@@ -466,24 +398,6 @@ impl crate::SerialPort for SerialStream {
     #[inline(always)]
     fn clear(&self, buffer_to_clear: crate::ClearBuffer) -> crate::Result<()> {
         self.inner.clear(buffer_to_clear)
-    }
-
-    /// Attempts to clone the `SerialPort`. This allow you to write and read simultaneously from the
-    /// same serial connection. Please note that if you want a real asynchronous serial port you
-    /// should look at [mio-serial](https://crates.io/crates/mio-serial) or
-    /// [tokio-serial](https://crates.io/crates/tokio-serial).
-    ///
-    /// Also, you must be very careful when changing the settings of a cloned `SerialPort` : since
-    /// the settings are cached on a per object basis, trying to modify them from two different
-    /// objects can cause some nasty behavior.
-    ///
-    /// # Errors
-    ///
-    /// This function returns an error if the serial port couldn't be cloned.
-    #[inline(always)]
-    #[cfg(any())]
-    fn try_clone(&self) -> crate::Result<Box<dyn crate::SerialPort>> {
-        Ok(Box::new(self.try_clone_native()?))
     }
 
     /// Cloning is not supported for [`SerialStream`] objects
