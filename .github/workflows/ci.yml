@@ -104,19 +104,8 @@ jobs:
       - name: Download com0com
         if: steps.cache-com0com.outputs.cache-hit != 'true'
         run: |
-          # Use direct SourceForge mirror URL to avoid JavaScript redirect
-          $url = "https://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip"
-          Invoke-WebRequest -Uri $url -OutFile com0com.zip -MaximumRedirection 5
-          Expand-Archive -Path com0com.zip -DestinationPath com0com-extract
-          # Flatten if there's a single subdirectory
-          $items = Get-ChildItem com0com-extract
-          if ($items.Count -eq 1 -and $items[0].PSIsContainer) {
-            $subdir = $items[0].FullName
-            Get-ChildItem -Path $subdir | Move-Item -Destination com0com-extract -Force
-            Remove-Item -Path $subdir -Force
-          }
-          Rename-Item com0com-extract com0com
-        shell: pwsh
+          curl -L -o com0com.zip "https://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip"
+          7z x com0com.zip -ocom0com
       - name: Install com0com
         run: |
           Get-ChildItem com0com  # Debug: list contents
