@@ -204,10 +204,7 @@ impl Fixture {
         let n = N.fetch_add(1, Ordering::Relaxed);
         let port_a = format!("{port_a}{n}");
         let port_b = format!("{port_b}{n}");
-        let args = [
-            format!("PTY,link={port_a}"),
-            format!("PTY,link={port_b}"),
-        ];
+        let args = [format!("PTY,link={port_a}"), format!("PTY,link={port_b}")];
         log::trace!("starting process: socat {} {}", args[0], args[1]);
 
         let process = process::Command::new("socat")
