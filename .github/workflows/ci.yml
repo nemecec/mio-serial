@@ -11,18 +11,28 @@ env:
 
 jobs:
   check:
-    name: Check & Clippy
-    runs-on: ubuntu-latest
+    name: Check & Clippy (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Install libudev
+      - name: Install libudev (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libudev-dev
       - run: cargo check --all-features
+        if: runner.os == 'Linux'
+      - run: cargo check
+        if: runner.os == 'Windows'
       - run: cargo clippy --all-features -- -D warnings
+        if: runner.os == 'Linux'
+      - run: cargo clippy -- -D warnings
+        if: runner.os == 'Windows'
 
   fmt:
     name: Format
@@ -34,12 +44,14 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all -- --check
 
-  test:
-    name: Test (Rust ${{ matrix.rust }})
+  test-linux:
+    name: Test Linux (Rust ${{ matrix.rust }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rust: ["1.78", stable]
+    env:
+      TEST_PORT_NAMES: /tmp/ttyS0;/tmp/ttyS1
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
@@ -48,7 +60,58 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install socat
         run: sudo apt-get update && sudo apt-get install -y socat
-      - run: cargo test
+      - name: Run tests
+        run: cargo test -j1 -- --test-threads=1
+
+  test-windows:
+    name: Test Windows (Rust ${{ matrix.rust }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        rust: [stable]
+    env:
+      TEST_PORT_NAMES: COM10;COM11
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Cache com0com
+        id: cache-com0com
+        uses: actions/cache@v5
+        with:
+          path: com0com
+          key: com0com-3.0.0.0
+      - name: Download com0com
+        if: steps.cache-com0com.outputs.cache-hit != 'true'
+        run: |
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/com0com/files/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip/download" -OutFile com0com.zip -UserAgent "Mozilla/5.0"
+          Expand-Archive -Path com0com.zip -DestinationPath com0com-extract
+          # Flatten if there's a single subdirectory
+          $items = Get-ChildItem com0com-extract
+          if ($items.Count -eq 1 -and $items[0].PSIsContainer) {
+            $subdir = $items[0].FullName
+            Get-ChildItem -Path $subdir | Move-Item -Destination com0com-extract -Force
+            Remove-Item -Path $subdir -Force
+          }
+          Rename-Item com0com-extract com0com
+        shell: pwsh
+      - name: Install com0com
+        run: |
+          Get-ChildItem com0com  # Debug: list contents
+          CertMgr.exe /add .github\com0com.cer /s /r localMachine root
+          CertMgr.exe /add .github\com0com.cer /s /r localMachine trustedpublisher
+          $installer = Get-ChildItem -Path com0com -Filter "*x64_signed.exe" -Recurse | Select-Object -First 1
+          Start-Process -FilePath $installer.FullName -ArgumentList "/S" -Wait
+        shell: pwsh
+      - name: Setup virtual serial ports
+        run: |
+          & "C:\Program Files (x86)\com0com\setupc.exe" install PortName=COM10,EmuBR=yes PortName=COM11,EmuBR=yes
+        shell: pwsh
+      - name: Run tests
+        run: cargo test -j1 -- --test-threads=1
 
   docs:
     name: Documentation
