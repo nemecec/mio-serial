@@ -19,6 +19,8 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
+      - name: Install libudev
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
       - run: cargo check --all-features
       - run: cargo clippy --all-features -- -D warnings
 
@@ -55,6 +57,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: Install libudev
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
       - run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: -D warnings
