@@ -97,8 +97,9 @@ jobs:
       - name: Install com0com via Chocolatey
         run: choco install com0com -y
       - name: Setup virtual serial ports
+        working-directory: C:\Program Files (x86)\com0com
         run: |
-          & "C:\Program Files (x86)\com0com\setupc.exe" install PortName=COM10,EmuBR=yes PortName=COM11,EmuBR=yes
+          .\setupc.exe install PortName=COM10,EmuBR=yes PortName=COM11,EmuBR=yes
         shell: pwsh
       - name: Run tests
         run: cargo test -j1 -- --test-threads=1
