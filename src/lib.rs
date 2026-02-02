@@ -64,9 +64,7 @@ mod os_prelude {
     pub use winapi::um::fileapi::*;
     pub use winapi::um::handleapi::INVALID_HANDLE_VALUE;
     pub use winapi::um::winbase::{COMMTIMEOUTS, FILE_FLAG_OVERLAPPED};
-    pub use winapi::um::winnt::{
-        FILE_ATTRIBUTE_NORMAL, GENERIC_READ, GENERIC_WRITE, HANDLE,
-    };
+    pub use winapi::um::winnt::{FILE_ATTRIBUTE_NORMAL, GENERIC_READ, GENERIC_WRITE, HANDLE};
 }
 use os_prelude::*;
 

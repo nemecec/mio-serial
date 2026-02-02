@@ -200,7 +200,7 @@ impl Fixture {
     pub fn new(port_a: &str, port_b: &str) -> Self {
         use std::sync::atomic::{AtomicUsize, Ordering};
         static N: AtomicUsize = AtomicUsize::new(0);
-        LOGGING_INIT.call_once(|| env_logger::init());
+        LOGGING_INIT.call_once(env_logger::init);
         let n = N.fetch_add(1, Ordering::Relaxed);
         let port_a = format!("{port_a}{n}");
         let port_b = format!("{port_b}{n}");
@@ -225,7 +225,7 @@ impl Fixture {
 
     #[cfg(not(unix))]
     pub fn new(port_a: &str, port_b: &str) -> Self {
-        LOGGING_INIT.call_once(|| env_logger::init());
+        LOGGING_INIT.call_once(env_logger::init);
         Self {
             port_a: port_a.to_owned(),
             port_b: port_b.to_owned(),
