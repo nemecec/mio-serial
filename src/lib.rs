@@ -668,7 +668,7 @@ mod io {
         }
     }
 
-    impl<'a> Read for &'a SerialStream {
+    impl Read for &SerialStream {
         fn read(&mut self, bytes: &mut [u8]) -> StdIoResult<usize> {
             uninterruptibly!(match unsafe {
                 libc::read(
@@ -683,7 +683,7 @@ mod io {
         }
     }
 
-    impl<'a> Write for &'a SerialStream {
+    impl Write for &SerialStream {
         fn write(&mut self, bytes: &[u8]) -> StdIoResult<usize> {
             uninterruptibly!(match unsafe {
                 libc::write(
