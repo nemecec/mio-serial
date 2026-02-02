@@ -177,8 +177,8 @@ pub fn checked_read(port: &mut mio_serial::SerialStream, data: &mut [u8], expect
 pub struct Fixture {
     #[cfg(unix)]
     process: process::Child,
-    pub port_a: &'static str,
-    pub port_b: &'static str,
+    pub port_a: String,
+    pub port_b: String,
 }
 
 #[cfg(unix)]
@@ -197,16 +197,16 @@ impl Drop for Fixture {
 
 impl Fixture {
     #[cfg(unix)]
-    pub fn new(port_a: &'static str, port_b: &'static str) -> Self {
+    pub fn new(port_a: &str, port_b: &str) -> Self {
         use std::sync::atomic::{AtomicUsize, Ordering};
         static N: AtomicUsize = AtomicUsize::new(0);
         LOGGING_INIT.call_once(|| env_logger::init());
         let n = N.fetch_add(1, Ordering::Relaxed);
-        let port_a = format!("{}{}", port_a, n).leak();
-        let port_b = format!("{}{}", port_b, n).leak();
+        let port_a = format!("{port_a}{n}");
+        let port_b = format!("{port_b}{n}");
         let args = [
-            format!("PTY,link={}", port_a),
-            format!("PTY,link={}", port_b),
+            format!("PTY,link={port_a}"),
+            format!("PTY,link={port_b}"),
         ];
         log::trace!("starting process: socat {} {}", args[0], args[1]);
 
@@ -224,9 +224,12 @@ impl Fixture {
     }
 
     #[cfg(not(unix))]
-    pub fn new(port_a: &'static str, port_b: &'static str) -> Self {
+    pub fn new(port_a: &str, port_b: &str) -> Self {
         LOGGING_INIT.call_once(|| env_logger::init());
-        Self { port_a, port_b }
+        Self {
+            port_a: port_a.to_owned(),
+            port_b: port_b.to_owned(),
+        }
     }
 }
 
