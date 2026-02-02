@@ -1,13 +1,10 @@
-[![Crates.io][crates-badge]][crates-url]
 [![MIT licensed][mit-badge]][mit-url]
 [![Build Status][actions-badge]][actions-url]
 
-[crates-badge]: https://img.shields.io/crates/v/mio-serial.svg
-[crates-url]: https://crates.io/crates/mio-serial
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[mit-url]: https://github.com/berkowski/mio-serial/blob/master/LICENSE
-[actions-badge]: https://github.com/berkowski/mio-serial/actions/workflows/github-ci.yml/badge.svg
-[actions-url]: https://github.com/berkowski/mio-serial/actions?query=workflow%3Agithub-ci+branch%3Amaster
+[mit-url]: https://github.com/nemecec/mio-serial/blob/master/LICENSE
+[actions-badge]: https://github.com/nemecec/mio-serial/actions/workflows/ci.yml/badge.svg
+[actions-url]: https://github.com/nemecec/mio-serial/actions?query=workflow%3ACI+branch%3Amaster
 
 # mio-serial: A serial port IO library MIO.
 
@@ -41,7 +38,7 @@ cargo build --no-default-features
 The Minimum Supported Rust Version is **1.78.0** as found using [cargo-msrv](https://crates.io/crates/cargo-msrv)
 
 ## Examples
-A few examples can be found [here](https://github.com/berkowski/mio-serial/tree/master/examples).
+A few examples can be found [here](https://github.com/nemecec/mio-serial/tree/master/examples).
 
 ## Tests
 Useful tests for serial ports require... serial ports, and serial ports are not often provided by online CI providers.
