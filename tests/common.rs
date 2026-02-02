@@ -230,14 +230,25 @@ impl Fixture {
     }
 }
 
-pub fn setup_virtual_serial_ports() -> Fixture {
+/// Returns true if serial port tests should be skipped.
+/// Set SKIP_SERIAL_TESTS=1 to skip tests requiring virtual serial ports.
+pub fn should_skip_serial_tests() -> bool {
+    std::env::var("SKIP_SERIAL_TESTS").is_ok()
+}
+
+pub fn setup_virtual_serial_ports() -> Option<Fixture> {
+    if should_skip_serial_tests() {
+        eprintln!("Skipping test: SKIP_SERIAL_TESTS is set");
+        return None;
+    }
+
     let port_names: Vec<&str> = std::option_env!("TEST_PORT_NAMES")
         .unwrap_or(DEFAULT_TEST_PORT_NAMES)
         .split(';')
         .collect();
 
     assert_eq!(port_names.len(), 2);
-    Fixture::new(port_names[0], port_names[1])
+    Some(Fixture::new(port_names[0], port_names[1]))
 }
 
 /// Assert serial port baud rate matches expected value.

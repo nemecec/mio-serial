@@ -8,7 +8,9 @@ const TOKEN2: Token = Token(1);
 
 #[test]
 fn test_builder_open_async() {
-    let fixture = common::setup_virtual_serial_ports();
+    let Some(fixture) = common::setup_virtual_serial_ports() else {
+        return;
+    };
     let baud_rate = 9600;
     let builder = mio_serial::new(&fixture.port_a, baud_rate);
 
@@ -24,7 +26,9 @@ fn test_native_from_blocking() {
     use std::convert::TryFrom;
     let baud_rate = 9600;
 
-    let fixture = common::setup_virtual_serial_ports();
+    let Some(fixture) = common::setup_virtual_serial_ports() else {
+        return;
+    };
     let port = &fixture.port_a;
     let native_blocking = mio_serial::new(port, baud_rate)
         .open_native()
@@ -39,7 +43,9 @@ fn test_native_from_blocking() {
 #[test]
 fn test_stream_open() {
     let baud_rate = 9600;
-    let fixture = common::setup_virtual_serial_ports();
+    let Some(fixture) = common::setup_virtual_serial_ports() else {
+        return;
+    };
     let port = &fixture.port_a;
     let builder = mio_serial::new(port, baud_rate);
     let stream = mio_serial::SerialStream::open(&builder).expect("unable to open serial port");
@@ -52,7 +58,9 @@ fn test_stream_open() {
 #[test]
 #[ignore = "Port enumeration test does not seem to work with com0com virtual ports"]
 fn test_port_enumeration() {
-    let fixture = common::setup_virtual_serial_ports();
+    let Some(fixture) = common::setup_virtual_serial_ports() else {
+        return;
+    };
     let ports = mio_serial::available_ports().expect("unable to enumerate serial ports");
     for name in [&fixture.port_a, &fixture.port_b] {
         ports
@@ -72,7 +80,9 @@ fn test_read_write_pair() {
 
     let baud_rate = 38400;
 
-    let fixture = common::setup_virtual_serial_ports();
+    let Some(fixture) = common::setup_virtual_serial_ports() else {
+        return;
+    };
     let (port_a, port_b) = (&fixture.port_a, &fixture.port_b);
     let (mut poll, mut events) = common::init_with_poll();
 

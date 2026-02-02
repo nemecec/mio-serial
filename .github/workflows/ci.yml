@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -28,11 +28,11 @@ jobs:
       - run: cargo check --all-features
         if: runner.os == 'Linux'
       - run: cargo check
-        if: runner.os == 'Windows'
+        if: runner.os != 'Linux'
       - run: cargo clippy --all-features -- -D warnings
         if: runner.os == 'Linux'
       - run: cargo clippy -- -D warnings
-        if: runner.os == 'Windows'
+        if: runner.os != 'Linux'
 
   fmt:
     name: Format
@@ -63,6 +63,23 @@ jobs:
       - name: Run tests
         run: cargo test -j1 -- --test-threads=1
 
+  test-macos:
+    name: Test macOS (Rust ${{ matrix.rust }})
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        rust: [stable]
+    env:
+      SKIP_SERIAL_TESTS: 1
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: cargo test -j1 -- --test-threads=1
+
   test-windows:
     name: Test Windows (Rust ${{ matrix.rust }})
     runs-on: windows-latest
@@ -87,7 +104,9 @@ jobs:
       - name: Download com0com
         if: steps.cache-com0com.outputs.cache-hit != 'true'
         run: |
-          Invoke-WebRequest -Uri "https://sourceforge.net/projects/com0com/files/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip/download" -OutFile com0com.zip -UserAgent "Mozilla/5.0"
+          # Use direct SourceForge mirror URL to avoid JavaScript redirect
+          $url = "https://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip"
+          Invoke-WebRequest -Uri $url -OutFile com0com.zip -MaximumRedirection 5
           Expand-Archive -Path com0com.zip -DestinationPath com0com-extract
           # Flatten if there's a single subdirectory
           $items = Get-ChildItem com0com-extract
