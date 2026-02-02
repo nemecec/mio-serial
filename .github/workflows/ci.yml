@@ -94,30 +94,8 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-      - name: Cache com0com
-        id: cache-com0com
-        uses: actions/cache@v5
-        with:
-          path: com0com
-          key: com0com-3.0.0.0
-      - name: Download com0com
-        if: steps.cache-com0com.outputs.cache-hit != 'true'
-        run: |
-          curl -L -o com0com.zip "https://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip"
-          7z x com0com.zip -ocom0com
-      - name: Install com0com
-        timeout-minutes: 5
-        run: |
-          Get-ChildItem com0com -Recurse | Select-Object FullName  # Debug: list contents
-          CertMgr.exe /add .github\com0com.cer /s /r localMachine root
-          CertMgr.exe /add .github\com0com.cer /s /r localMachine trustedpublisher
-          $installer = Get-ChildItem -Path com0com -Filter "*x64_signed.exe" -Recurse | Select-Object -First 1
-          if (-not $installer) { throw "Installer not found" }
-          Write-Host "Running installer: $($installer.FullName)"
-          $proc = Start-Process -FilePath $installer.FullName -ArgumentList "/S" -Wait -PassThru
-          Write-Host "Installer exit code: $($proc.ExitCode)"
-        shell: pwsh
+      - name: Install com0com via Chocolatey
+        run: choco install com0com -y
       - name: Setup virtual serial ports
         run: |
           & "C:\Program Files (x86)\com0com\setupc.exe" install PortName=COM10,EmuBR=yes PortName=COM11,EmuBR=yes
