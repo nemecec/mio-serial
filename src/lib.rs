@@ -662,10 +662,9 @@ mod io {
 
     impl IntoRawHandle for SerialStream {
         fn into_raw_handle(self) -> RawHandle {
-            // Since NamedPipe doesn't impl IntoRawHandle we'll use AsRawHandle and bypass
-            // NamedPipe's destructor to keep the handle in the current state
-            let manual = mem::ManuallyDrop::new(self.pipe);
-            manual.as_raw_handle()
+            // Prevent Drop from running, then extract the handle
+            let manual = mem::ManuallyDrop::new(self);
+            manual.pipe.as_raw_handle()
         }
     }
 
