@@ -242,10 +242,9 @@ pub fn setup_virtual_serial_ports() -> Option<Fixture> {
         return None;
     }
 
-    let port_names: Vec<&str> = std::option_env!("TEST_PORT_NAMES")
-        .unwrap_or(DEFAULT_TEST_PORT_NAMES)
-        .split(';')
-        .collect();
+    let port_names_str =
+        std::env::var("TEST_PORT_NAMES").unwrap_or_else(|_| DEFAULT_TEST_PORT_NAMES.to_string());
+    let port_names: Vec<&str> = port_names_str.split(';').collect();
 
     assert_eq!(port_names.len(), 2);
     Some(Fixture::new(port_names[0], port_names[1]))
