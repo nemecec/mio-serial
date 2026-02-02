@@ -770,6 +770,7 @@ mod io {
 #[cfg(unix)]
 mod sys {
     use super::{NativeBlockingSerialPort, SerialStream};
+    use nix::libc;
     use std::os::unix::prelude::*;
 
     impl AsRawFd for SerialStream {
@@ -785,8 +786,22 @@ mod sys {
     }
 
     impl FromRawFd for SerialStream {
+        /// Creates a `SerialStream` from a raw file descriptor.
+        ///
+        /// # Safety
+        /// The file descriptor must be a valid, open serial port.
+        ///
+        /// # Panics
+        /// Panics if setting O_NONBLOCK fails.
         unsafe fn from_raw_fd(fd: RawFd) -> Self {
             let port = NativeBlockingSerialPort::from_raw_fd(fd);
+
+            // Set O_NONBLOCK for consistency with TryFrom<NativeBlockingSerialPort>
+            let flags = libc::fcntl(fd, libc::F_GETFL);
+            assert!(flags >= 0, "failed to get file descriptor flags");
+            let result = libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK);
+            assert!(result == 0, "failed to set O_NONBLOCK");
+
             Self { inner: port }
         }
     }
